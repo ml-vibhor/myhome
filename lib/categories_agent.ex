@@ -1,4 +1,4 @@
-defmodule Categories do
+defmodule CategoriesAgent do
   use Agent
 
   def start_link(opts) do
