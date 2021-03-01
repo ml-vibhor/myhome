@@ -18,6 +18,6 @@ defmodule CategoriesTest do
 
   test "delete cat and set new", %{cat_agent_pid: cat_agent_pid} do
     Categories.delete_cat_item(cat_agent_pid, "Ration")
-    assert Categories.get_cat_item(cat_agent_pid, "Ration") == nil
+    assert Categories.get_cat_item(cat_agent_pid, "Ration") == ni
   end
 end
