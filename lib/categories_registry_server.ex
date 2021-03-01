@@ -31,24 +31,61 @@ defmodule CategoriesRegistryServer do
 
   @impl true
   def init(:ok) do
-    {:ok, %{}}
+    cat_names_and_cat_agent_pids_map = %{}
+    cat_names_and_monitor_refs_map = %{}
+    {:ok, {cat_names_and_cat_agent_pids_map, cat_names_and_monitor_refs_map}}
   end
 
   @impl true
-  def handle_call({:lookup, cat_name}, _from, cat_registry) do
-    {:reply, Map.fetch(cat_registry, cat_name), cat_registry}
+  def handle_call({:lookup, cat_name}, _from, registry_state) do
+    {cat_names_and_cat_agent_pids_map, _} = registry_state
+    {:reply, Map.fetch(cat_names_and_cat_agent_pids_map, cat_name), registry_state}
   end
 
   @impl true
-  def handle_cast({:create, cat_name}, cat_registry) do
+  def handle_cast({:create, cat_name}, registry_state) do
+    {cat_names_and_cat_agent_pids_map, cat_names_and_monitor_refs_map} = registry_state
     ## check if key already exists in our registry
-    if(Map.has_key?(cat_registry, cat_name)) do
-      {:noreply, cat_registry}
+    if(Map.has_key?(cat_names_and_cat_agent_pids_map, cat_name)) do
+      {:noreply, registry_state}
     else
       ## start a new agent process for this cat and add the pid <=> cat_name map in our registry
       {:ok, cat_agent_pid} = CategoriesAgent.start_link([])
-      {:noreply, Map.put(cat_registry, cat_name, cat_agent_pid)}
+
+      ## monitor this agent process
+      ref_id = Process.monitor(cat_agent_pid)
+
+      ## update the cat name vs registry pid map
+      cat_names_and_cat_agent_pids_map =
+        Map.put(cat_names_and_cat_agent_pids_map, cat_name, cat_agent_pid)
+
+      ## update the ref id vs cat name
+      cat_names_and_monitor_refs_map = Map.put(cat_names_and_monitor_refs_map, ref_id, cat_name)
+
+      {:noreply, {cat_names_and_cat_agent_pids_map, cat_names_and_monitor_refs_map}}
     end
+  end
+
+  @impl true
+  def handle_info(
+        {:DOWN, ref, :process, _pid, _reason},
+        {cat_names_and_cat_agent_pids_map, cat_names_and_monitor_refs_map}
+      ) do
+    ## update registry in case an agent is stopped
+
+    ## using the reference id we 'pop' the category name,
+    {cat_name, cat_names_and_monitor_refs_map} = Map.pop(cat_names_and_monitor_refs_map, ref)
+
+    ## using 'cat_name' we delete the entry in 'cat_names_and_cat_agent_pids_map'
+    cat_names_and_cat_agent_pids_map = Map.delete(cat_names_and_cat_agent_pids_map, cat_name)
+
+    ## set updated state of the registry
+    {:noreply, {cat_names_and_cat_agent_pids_map, cat_names_and_monitor_refs_map}}
+  end
+
+  @impl true
+  def handle_info(_msg, state) do
+    {:noreply, state}
   end
 
   # @impl true
