@@ -1,5 +1,7 @@
 # HouseThings
 
+[![Build Status](https://travis-ci.com/ml-vibhor/myhome.svg?branch=master)](https://travis-ci.com/ml-vibhor/myhome)
+
 **TODO: Add description**
 
 ## Installation
