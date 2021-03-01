@@ -1,5 +1,7 @@
 defmodule CategoriesRegistryServer do
-  @doc """
+  use GenServer
+
+  @moduledoc """
   Motovation: Agents alone cannot provide enough functionality to deal with client/server setup.
   It is good practice to put generic server functionalities in a seperate process. For this, we will need
   a registry of the agent process vs category names so that we can initialize agents dynamically thereby maintaining a map.
@@ -7,8 +9,6 @@ defmodule CategoriesRegistryServer do
   Here we will implement the client APIs and the Genserver callback
   Our implementation will ensure that agents are dynamically created, monitored and thh registry is always available.
   """
-
-  use GenServer
 
   ## implement client APIs
 
