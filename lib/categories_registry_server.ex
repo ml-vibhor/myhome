@@ -50,7 +50,9 @@ defmodule CategoriesRegistryServer do
       {:noreply, registry_state}
     else
       ## start a new agent process for this cat and add the pid <=> cat_name map in our registry
-      {:ok, cat_agent_pid} = CategoriesAgent.start_link([])
+      ## {:ok, cat_agent_pid} = CategoriesAgent.start_link([])
+      {:ok, cat_agent_pid} =
+        DynamicSupervisor.start_child(CategoriesAgentSupervisor, CategoriesAgent)
 
       ## monitor this agent process
       ref_id = Process.monitor(cat_agent_pid)
